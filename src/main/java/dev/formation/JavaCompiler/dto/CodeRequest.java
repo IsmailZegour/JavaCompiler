@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CodeRequest {
     private String code;
+    private String language;
 }

@@ -2,54 +2,54 @@ package dev.formation.JavaCompiler.service;
 
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.InputStreamReader;
 
 @Service
 public class CompilerService {
 
-    public String compileAndRun(String code) throws IOException, InterruptedException {
-        // Extraire le nom de la classe publique
-        String className = extractClassName(code);
+    public String compileAndRun(String code, String language) throws IOException, InterruptedException {
+        Process process = getProcess(code, language);
 
-        if (className == null) {
-            return "Error: Could not find a public class declaration.";
+        // Lire la sortie du conteneur
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
         }
 
-        // Créer un fichier temporaire avec le bon nom
-        Path tempDir = Files.createTempDirectory("java-code");
-        Path javaFile = tempDir.resolve(className + ".java");
-        Files.write(javaFile, code.getBytes());
+        // Attendre la fin du processus
+        int exitCode = process.waitFor();
 
-        // Compiler le fichier
-        Process compileProcess = new ProcessBuilder("javac", javaFile.toString()).start();
-        compileProcess.waitFor();
-
-        // Vérifier les erreurs de compilation
-        if (compileProcess.exitValue() != 0) {
-            return new String(compileProcess.getErrorStream().readAllBytes());
-        }
-
-        // Exécuter le fichier compilé
-        Process runProcess = new ProcessBuilder("java", "-cp", tempDir.toString(), className).start();
-        runProcess.waitFor();
-
-        // Récupérer la sortie ou les erreurs
-        if (runProcess.exitValue() == 0) {
-            return new String(runProcess.getInputStream().readAllBytes()).replace("\r\n", "\n");
-        } else {
-            return new String(runProcess.getErrorStream().readAllBytes());
-        }
+        return output.toString();
     }
 
-    private String extractClassName(String code) {
-        Pattern pattern = Pattern.compile("public\\s+class\\s+(\\w+)");
-        Matcher matcher = pattern.matcher(code);
-        return matcher.find() ? matcher.group(1) : null;
-    }
+    private static Process getProcess(String code, String language) throws IOException {
+        String imageName;
 
+        // Associer le langage à l'image Docker correspondante
+        switch (language.toLowerCase()) {
+            case "java":
+                imageName = "java-compiler-worker";
+                break;
+            case "python":
+                imageName = "python-compiler-worker";
+                break;
+            case "c":
+                imageName = "c-compiler-worker";
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported language: " + language);
+        }
+
+        // Construire et exécuter la commande Docker
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                "docker", "run", "--rm", imageName, code
+        );
+        processBuilder.redirectErrorStream(true);
+        return processBuilder.start();
+    }
 }
-

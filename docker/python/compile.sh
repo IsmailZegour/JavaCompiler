@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# Créer un fichier temporaire contenant le code
-echo "$1" > script.py
-
-# Exécuter le fichier Python
-python3 script.py 2> error.log
-
-# Si erreur, afficher les logs
-if [ $? -ne 0 ]; then
-    cat error.log
+# Lire le code depuis l'argument ou l'entrée standard
+if [ $# -gt 0 ]; then
+    code="$1"
+else
+    code=$(cat)
 fi
+
+# Exécuter le code Python
+python3 -c "$code"
