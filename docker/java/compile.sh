@@ -1,24 +1,58 @@
 #!/bin/bash
 
-# Extraire le nom de la classe publique
-className=$(echo "$1" | grep -oP 'public\s+class\s+\K\w+')
+# Vérifier si un fichier est monté
+if [ -f "/workspace/Main.java" ]; then
+    # Lire le contenu du fichier
+    code=$(cat /workspace/Main.java)
+else
+    # Lire depuis stdin ou arguments
+    if [ $# -gt 0 ]; then
+        code="$1"
+    else
+        code=$(cat)
+    fi
+fi
 
-# Vérifier si le nom de la classe a été trouvé
+# Nettoyer le code des caractères spéciaux
+code=$(echo "$code" | tr -d '\r')
+
+# Normaliser l'encodage pour éviter les erreurs liées à l'UTF-8
+code=$(echo "$code" | iconv -f UTF-8 -t UTF-8)
+
+# Extraire le nom de la classe publique
+className=$(echo "$code" | grep -oP 'public\s+class\s+\K\w+')
+
+# Vérifier si une classe publique a été trouvée
 if [ -z "$className" ]; then
     echo "Error: Could not find a public class declaration."
     exit 1
 fi
 
-# Créer un fichier temporaire contenant le code avec le bon nom
-echo "$1" > "$className.java"
+# Créer un fichier temporaire avec le code
+echo "$code" > "$className.java"
 
-# Compiler le fichier
+# Compiler le fichier Java
 javac "$className.java" 2> error.log
 
-# Si la compilation réussit, exécuter le fichier
-if [ $? -eq 0 ]; then
-    java "$className"
-else
-    # Si la compilation échoue, afficher les erreurs
+# Vérifier si la compilation a échoué
+if [ $? -ne 0 ]; then
+    echo "Compilation failed:"
     cat error.log
+    exit 1
 fi
+
+# Exécuter le fichier compilé
+java "$className" > output.log 2> error.log
+
+# Vérifier si l'exécution a échoué
+if [ $? -ne 0 ]; then
+    echo "Execution failed:"
+    cat error.log
+    exit 1
+fi
+
+# Afficher uniquement la sortie du programme
+cat output.log
+
+# Nettoyer les fichiers temporaires
+rm -f "$className.java" "$className.class" error.log output.log
