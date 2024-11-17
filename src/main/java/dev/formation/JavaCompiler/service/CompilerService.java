@@ -21,9 +21,6 @@ public class CompilerService {
             }
         }
 
-        // Attendre la fin du processus
-        int exitCode = process.waitFor();
-
         return output.toString();
     }
 

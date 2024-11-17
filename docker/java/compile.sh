@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Définir une limite de temps pour l'exécution (par exemple, 10 secondes)
+TIMEOUT=5
+
 # Vérifier si un fichier est monté
 if [ -f "/workspace/Main.java" ]; then
     # Lire le contenu du fichier
@@ -32,7 +35,7 @@ fi
 echo "$code" > "$className.java"
 
 # Compiler le fichier Java
-javac "$className.java" 2> error.log
+timeout $TIMEOUT javac "$className.java" 2> error.log
 
 # Vérifier si la compilation a échoué
 if [ $? -ne 0 ]; then
@@ -41,8 +44,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Exécuter le fichier compilé
-java "$className" > output.log 2> error.log
+# Exécuter le fichier compilé avec timeout
+timeout $TIMEOUT java "$className" > output.log 2> error.log
 
 # Vérifier si l'exécution a échoué
 if [ $? -ne 0 ]; then
