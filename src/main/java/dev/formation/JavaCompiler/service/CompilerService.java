@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 public class CompilerService {
 
     public String compileAndRun(String code, String language) throws IOException, InterruptedException {
+//        long startTime = System.nanoTime();
         Process process = getProcess(code, language);
 
         // Lire la sortie du conteneur
@@ -20,6 +21,17 @@ public class CompilerService {
                 output.append(line).append("\n");
             }
         }
+
+        // Attendre la fin du processus
+        int exitCode = process.waitFor();
+//
+//        // Calculer le temps écoulé
+//        long endTime = System.nanoTime();
+//        long executionTimeMs = (endTime - startTime) / 1_000_000; // Convertir en millisecondes
+//
+////         Ajouter les informations de performance
+//        output.append("\n--- Performance Metrics ---\n");
+//        output.append("Execution Time: ").append(executionTimeMs).append(" ms\n");
 
         return output.toString();
     }
@@ -44,7 +56,7 @@ public class CompilerService {
 
         // Construire et exécuter la commande Docker
         ProcessBuilder processBuilder = new ProcessBuilder(
-                "docker", "run", "--rm", imageName, code
+                "docker", "run", "--rm","--memory=256m","--cpus=0.5", imageName, code
         );
         processBuilder.redirectErrorStream(true);
         return processBuilder.start();

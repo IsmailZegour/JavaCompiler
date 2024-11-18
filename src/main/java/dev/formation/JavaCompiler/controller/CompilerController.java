@@ -24,16 +24,16 @@ public class CompilerController {
             // Le client envoie le code et le langage
             String language = codeRequest.getLanguage();
             String code = codeRequest.getCode();
-            //System.out.println("Code reçu avant transformation :\n" + code);
+
             // Transformation des guillemets simples en triple guillemets
             if ("java".equalsIgnoreCase(language)) {
                 code = code.replace("\"", "\"\"\"");
             }
-           // System.out.println("Code après transformation :\n" + code);
 
             // Compiler et exécuter le code
             String output = compilerService.compileAndRun(code, language);
             return ResponseEntity.ok(new CodeResponse(output));
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CodeResponse("Compilation error: "+e.getMessage()));
         } catch (Exception e) {
