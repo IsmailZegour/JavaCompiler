@@ -26,9 +26,9 @@ public class CompilerController {
             String code = codeRequest.getCode();
 
             // Transformation des guillemets simples en triple guillemets
-            if ("java".equalsIgnoreCase(language)) {
-                code = code.replace("\"", "\"\"\"");
-            }
+//            if ("java".equalsIgnoreCase(language)) {
+//                code = code.replace("\"", "\"\"\"");
+//            }
 
             // Compiler et exécuter le code
             String output = compilerService.compileAndRun(code, language);
