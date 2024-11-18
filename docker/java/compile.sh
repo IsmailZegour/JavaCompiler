@@ -28,7 +28,7 @@ className=$(echo "$code" | grep -oP 'public\s+class\s+\K\w+')
 # Vérifier si une classe publique a été trouvée
 if [ -z "$className" ]; then
     echo "Error: Could not find a public class declaration."
-    exit 1
+    exit 3
 fi
 
 # Créer un fichier temporaire avec le code
@@ -39,9 +39,9 @@ timeout $TIMEOUT javac "$className.java" 2> error.log
 
 # Vérifier si la compilation a échoué
 if [ $? -ne 0 ]; then
-    echo "Compilation failed:"
+    echo "Compilation failed :"
     cat error.log
-    exit 1
+    exit 2
 fi
 
 # Exécuter le fichier compilé avec timeout
@@ -49,7 +49,7 @@ timeout $TIMEOUT java "$className" > output.log 2> error.log
 
 # Vérifier si l'exécution a échoué
 if [ $? -ne 0 ]; then
-    echo "Execution failed:"
+    echo "Execution failed :"
     cat error.log
     exit 1
 fi
