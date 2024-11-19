@@ -83,7 +83,7 @@ public class CompilerService {
         long executionTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime); // Temps écoulé en ms
 
 //        String stats = getContainerStatsCURL(containerId);
-        String stats = "zebi";
+        String stats = "test";
 
         stopContainer(containerId);
         stats = String.valueOf(executionTime);
