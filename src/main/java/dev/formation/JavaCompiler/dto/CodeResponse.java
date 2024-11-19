@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CodeResponse {
     private String output;
+    private String stats;
 }

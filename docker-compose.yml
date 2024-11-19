@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  java-backend:
+    image: java-backend # Utilise votre image existante
+    container_name: java-backend-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # Mappe le port 8080 de l'hôte au conteneur
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Montre le socket Docker pour permettre les interactions Docker
+    environment:
+      - JAVA_OPTS=-Xms512m -Xmx512m # Ajustez les paramètres JVM si nécessaire
+    restart: unless-stopped

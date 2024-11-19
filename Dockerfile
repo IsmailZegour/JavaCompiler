@@ -20,6 +20,10 @@ WORKDIR /app
 # Copier l'artefact généré depuis la phase de build
 COPY --from=builder /app/target/*.jar app.jar
 
+RUN apt-get update && apt-get install -y \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
 # Exposer le port utilisé par l'application
 EXPOSE 8080
 

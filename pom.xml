@@ -31,6 +31,15 @@
 			<optional>true</optional>
 		</dependency>
 
+
+		<!-- JAVAX RS-->
+		<dependency>
+			<groupId>javax.ws.rs</groupId>
+			<artifactId>javax.ws.rs-api</artifactId>
+			<version>2.1.1</version> <!-- Vous pouvez utiliser la dernière version stable -->
+			<scope>provided</scope>
+		</dependency>
+
 		<!-- Lombok -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>

@@ -54,6 +54,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+end_time=$(date +%s%3N) # Temps en millisecondes
+execution_time=$((end_time - start_time)) # Durée en millisecondes
+
+echo "Execution time: ${execution_time}ms"
 # Afficher uniquement la sortie du programme
 cat output.log
 
