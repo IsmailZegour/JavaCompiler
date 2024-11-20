@@ -19,6 +19,7 @@ WORKDIR /app
 
 # Copier l'artefact généré depuis la phase de build
 COPY --from=builder /app/target/*.jar app.jar
+#COPY /app/target/*.jar app.jar
 
 RUN apt-get update && apt-get install -y \
     docker.io \

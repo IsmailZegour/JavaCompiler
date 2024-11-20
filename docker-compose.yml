@@ -4,6 +4,8 @@ services:
   java-backend:
     image: java-backend # Utilise votre image existante
     container_name: java-backend-container
+#    networks:
+#      - shared_network
     build:
       context: .
       dockerfile: Dockerfile
@@ -11,6 +13,7 @@ services:
       - "8080:8080" # Mappe le port 8080 de l'hôte au conteneur
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Montre le socket Docker pour permettre les interactions Docker
-    environment:
-      - JAVA_OPTS=-Xms512m -Xmx512m # Ajustez les paramètres JVM si nécessaire
+#      - shared_volume:/app/tmp
+#    environment:
+#      JAVA_OPTS: "-Xms512m -Xmx512m -XX:+DisableExplicitGC"
     restart: unless-stopped

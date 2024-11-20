@@ -9,5 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CodeResponse {
     private String output;
-    private String stats;
+    private String executionTime;
+    private String memoryUsage;
 }

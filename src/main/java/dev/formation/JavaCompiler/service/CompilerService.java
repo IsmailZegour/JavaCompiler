@@ -1,6 +1,5 @@
 package dev.formation.JavaCompiler.service;
 
-
 import dev.formation.JavaCompiler.dto.CodeRequest;
 import dev.formation.JavaCompiler.dto.CodeResponse;
 import org.springframework.stereotype.Service;
@@ -8,21 +7,12 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
-import java.util.concurrent.TimeUnit;
-
-//TODO Rajouter les exitcodes pour les erreurs de compilations / execution
-//TODO Stats : modifier le compile.sh du java-compiler-worker => faire noter les stats dans un fichier toute les X ms
-//TODO Récupérer ce fichier dans le backend puis parser
 
 @Service
 public class CompilerService {
 
     private static final int MAX_LINES = 200; // Limite du nombre de lignes
     private static final int MAX_BYTES = 10_000; // Limite en octets (~10 Ko)
-    private static final int TIMEOUT_SECONDS = 10; // Timeout en secondes
     private static final String[] FORBIDDEN_CLASSES = {
             "Runtime",
             "ProcessBuilder",
@@ -66,166 +56,122 @@ public class CompilerService {
             "java\\.io\\.File", // File operations
             "java\\.nio\\.file\\.Paths" // Path operations
     };
+
     public CodeResponse compileAndRun(CodeRequest codeRequest) throws Exception {
         String language = codeRequest.getLanguage();
         String code = codeRequest.getCode();
 
         if (language.equalsIgnoreCase("java")) {
             validateJava(code); // Validation avant traitement
-//            code = formatJava(code);
         }
 
-        String containerId = startContainer(code, language);
+        CodeResponse response = startContainer(code, language);
+        System.out.println("Output: " + response.getOutput());
 
-        long startTime = System.nanoTime(); // Début du chronométrage
-
-        String output = captureContainerOutput(containerId);
-        long executionTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime); // Temps écoulé en ms
-
-//        String stats = getContainerStatsCURL(containerId);
-        String stats = "test";
-
-        stopContainer(containerId);
-        stats = String.valueOf(executionTime);
-        return new CodeResponse(output, stats);
+        return response;
     }
 
-    private static String startContainer(String code, String language) throws IOException {
+    private static CodeResponse startContainer(String code, String language) throws IOException, InterruptedException {
         String imageName = switch (language.toLowerCase()) {
-            case "java" -> "java-compiler-worker";
+            case "java" -> "jcw";
             case "python" -> "python-compiler-worker";
             case "c" -> "c-compiler-worker";
             default -> throw new IllegalArgumentException("Unsupported language: " + language);
         };
 
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                "docker", "run", "-d", "--memory=256m", "--cpus=0.5", imageName, code
-        );
-        processBuilder.redirectErrorStream(true);
-
-        Process process = processBuilder.start();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            return reader.readLine(); // Retourne le container_id
-        }
-    }
-
-    private static void waitForContainer(String containerId) throws IOException, InterruptedException {
-        new ProcessBuilder("docker", "wait", containerId)
-                .redirectErrorStream(true)
-                .start()
-                .waitFor();
-    }
-
-    private static String captureContainerOutput(String containerId) throws IOException, InterruptedException {
-
-        // Attendre que le conteneur se termine
-        waitForContainer(containerId);
+        String instrumentedCode = injectMemoryMeasurement(code);
 
         ProcessBuilder processBuilder = new ProcessBuilder(
-                "docker", "logs", containerId
+                "docker", "run",
+                "--rm", // Supprime automatiquement le conteneur après exécution
+                "--memory=256m", // Limiter la mémoire
+                "--cpus=0.5", // Limiter les CPU
+                imageName, // Nom de l'image
+                instrumentedCode // Argument à passer au conteneur
         );
         processBuilder.redirectErrorStream(true);
-
         Process process = processBuilder.start();
 
+        String executionTime="";
+        String memoryUsage="";
+
+        int exitCode = process.waitFor();
+
+        // Capturer la sortie du conteneur
         StringBuilder output = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
+                if(line.contains("{ExecutionTime}")){
+                    executionTime= line.split(":")[1];
+                } else if (line.contains("{MemoryUsage}")) {
+                    memoryUsage= line.split(":")[1];
+                }else{
+                    output.append(line).append("\n");
+                }
             }
         }
-        return output.toString();
 
-
-    }
-
-    public static String getContainerStatsCURL(String containerId) throws Exception {
-        String dockerApiUrl = "http://localhost:2375/containers/" + containerId + "/stats?stream=false";
-        URL url = new URL(dockerApiUrl);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        StringBuilder response = new StringBuilder();
-        String inputLine;
-
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
+        if (exitCode != 0) {
+            throw new RuntimeException(output.toString());
         }
-        in.close();
 
-        return response.toString(); // JSON contenant les stats
+        return new CodeResponse(output.toString(),executionTime,memoryUsage);
     }
 
-//    public static String getContainerStats(String containerId) throws Exception {
-//        int a=0;
-////        DockerClient dockerClient = DockerClientBuilder.getInstance().build();
-//        int b=0;
+    private static String injectMemoryMeasurement(String code) {
+        String memoryBefore = """
+        Runtime runtime = Runtime.getRuntime();
+        long usedMemoryBefore = runtime.totalMemory() - runtime.freeMemory();
+        """;
 
-//        DefaultDockerClientConfig.Builder config
-//                = DefaultDockerClientConfig.createDefaultConfigBuilder();
+        String memoryAfter = """
+        long usedMemoryAfter = runtime.totalMemory() - runtime.freeMemory();
+        System.out.println("{MemoryUsage}:" + ((usedMemoryAfter-usedMemoryBefore)/ 1024));
+        """;
 
-//        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-//                .dockerHost(config.getDockerHost())
-//                .sslConfig(config.getSSLConfig())
-//                .maxConnections(100)
-//                .connectionTimeout(Duration.ofSeconds(30))
-//                .responseTimeout(Duration.ofSeconds(45))
-//                .build();
-
-
-
-//        DockerClient dockerClient = DockerClientBuilder
-//                .getInstance(config)
-//                .build();
-
-//        DockerClientConfig standard = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-//        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
-//        dockerClient.pingCmd().exec();
-
-//        StringBuilder statsResponse = new StringBuilder();
-//        List<Container> containers = dockerClient.listContainersCmd().exec();
-//        System.out.print(containers);
-//        dockerClient.statsCmd(containerId).exec(new ResultCallback.Adapter<>() {
-//            @Override
-//            public void onNext(Statistics stats) {
-//                statsResponse.append("Memory Usage: ").append(stats.getMemoryStats().getUsage()).append(" bytes\n");
-//                statsResponse.append("Memory Max Usage: ").append(stats.getMemoryStats().getMaxUsage()).append(" bytes\n");
-//                statsResponse.append("CPU Total Usage: ").append(stats.getCpuStats().getCpuUsage().getTotalUsage()).append(" nanoseconds\n");
-//            }
-//        }).awaitCompletion(); // Attendre que les stats soient collectées
-
-//        return statsResponse.toString();
-//    }
-
-    private static String captureMemoryUsage(String containerId) throws IOException {
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                "docker", "stats", "--no-stream", "--format", "{{.MemUsage}}", containerId
-        );
-        processBuilder.redirectErrorStream(true);
-
-        Process process = processBuilder.start();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            return reader.readLine(); // Mémoire utilisée
+        // Trouver le début de la méthode main
+        int mainStartIndex = code.indexOf("public static void main(String[] args) {");
+        if (mainStartIndex == -1) {
+            throw new IllegalArgumentException("No main method found in the code.");
         }
-    }
 
-    private static void stopContainer(String containerId) throws IOException, InterruptedException {
-        new ProcessBuilder("docker", "rm", "-f", containerId)
-                .redirectErrorStream(true)
-                .start()
-                .waitFor();
-    }
+        // Trouver l'index pour insérer le code après la déclaration de la méthode main
+        int insertAfterMain = mainStartIndex + "public static void main(String[] args) {".length();
 
-    private static String formatJava(String input) {
-        if (input == null) {
-            throw new IllegalArgumentException("Code cannot be null.");
+        // Séparer le code en deux parties
+        String codeBeforeMain = code.substring(0, insertAfterMain);
+        String codeAfterMain = code.substring(insertAfterMain);
+
+        // Identifier la fin de la méthode main
+        int openBraces = 1; // Une accolade ouverte pour "main"
+        int mainEndIndex = -1;
+        for (int i = 0; i < codeAfterMain.length(); i++) {
+            char ch = codeAfterMain.charAt(i);
+            if (ch == '{') {
+                openBraces++;
+            } else if (ch == '}') {
+                openBraces--;
+            }
+            if (openBraces == 0) { // Trouvé la fermeture de "main"
+                mainEndIndex = i;
+                break;
+            }
         }
-        return input.replace("\"", "\"\"\""); // Échappe les guillemets pour éviter les erreurs
+
+        if (mainEndIndex == -1) {
+            throw new IllegalArgumentException("Could not find the end of the main method.");
+        }
+
+        return codeBeforeMain
+                + "\n" + memoryBefore + "\n"
+                + codeAfterMain.substring(0, mainEndIndex)
+                + "\n" + memoryAfter + "\n"
+                + codeAfterMain.substring(mainEndIndex);
     }
+
+
+
 
     private static void validateJava(String code) {
         if (code == null || code.trim().isEmpty()) {

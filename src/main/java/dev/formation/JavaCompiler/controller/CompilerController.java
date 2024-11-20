@@ -29,12 +29,12 @@ public class CompilerController {
             // Gère les erreurs de validation (mauvais code, etc.)
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(new CodeResponse(e.getMessage(), "pipi"));
+                    .body(new CodeResponse(e.getMessage(), null,null));
         } catch (Exception e) {
             // Gère les erreurs internes ou inattendues
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new CodeResponse(e.getMessage(),"caca"));
+                    .body(new CodeResponse(e.getMessage(),null,null));
         }
     }
 }

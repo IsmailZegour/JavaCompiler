@@ -3,18 +3,8 @@
 # Définir une limite de temps pour l'exécution (par exemple, 10 secondes)
 TIMEOUT=5
 
-# Vérifier si un fichier est monté
-if [ -f "/workspace/Main.java" ]; then
-    # Lire le contenu du fichier
-    code=$(cat /workspace/Main.java)
-else
-    # Lire depuis stdin ou arguments
-    if [ $# -gt 0 ]; then
-        code="$1"
-    else
-        code=$(cat)
-    fi
-fi
+# Lire le code à partir de l'argument
+code="$1"
 
 # Nettoyer le code des caractères spéciaux
 code=$(echo "$code" | tr -d '\r')
@@ -34,12 +24,15 @@ fi
 # Créer un fichier temporaire avec le code
 echo "$code" > "$className.java"
 
+# Démarrer le chronométrage
+start_time=$(date +%s%3N)
+
 # Compiler le fichier Java
 timeout $TIMEOUT javac "$className.java" 2> error.log
 
 # Vérifier si la compilation a échoué
 if [ $? -ne 0 ]; then
-    echo "Compilation failed :"
+    echo "Compilation failed:"
     cat error.log
     exit 2
 fi
@@ -49,17 +42,18 @@ timeout $TIMEOUT java "$className" > output.log 2> error.log
 
 # Vérifier si l'exécution a échoué
 if [ $? -ne 0 ]; then
-    echo "Execution failed :"
+    echo "Execution failed:"
     cat error.log
     exit 1
 fi
 
+# Arrêter le chronométrage
 end_time=$(date +%s%3N) # Temps en millisecondes
-execution_time=$((end_time - start_time)) # Durée en millisecondes
+EXECUTION_TIME=$((end_time - start_time)) # Durée en millisecondes
 
-echo "Execution time: ${execution_time}ms"
-# Afficher uniquement la sortie du programme
+# Afficher la sortie du programme suivie de l'exécution totale
 cat output.log
+echo "{ExecutionTime}: ${EXECUTION_TIME}"
 
 # Nettoyer les fichiers temporaires
 rm -f "$className.java" "$className.class" error.log output.log
