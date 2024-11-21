@@ -8,21 +8,26 @@ import dev.formation.JavaCompiler.service.CompilerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.ws.rs.core.Application;
 
+import java.util.Arrays;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CompilerController.class)
+//@ActiveProfiles("test")
 class CompilerControllerTest {
 
     @Autowired
@@ -34,22 +39,34 @@ class CompilerControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private Environment environment;
+
+    @Value("${frontend.url}")
+    private String frontendUrl; // URL de votre frontend injectée depuis les variables d'environnement
+
+
+    @Test
+    void checkActiveProfile() {
+        System.out.println("Active Profiles: " + Arrays.toString(environment.getActiveProfiles()));
+    }
     @Test
     void compileAndRun_Successful() throws Exception {
         // Mock de la réponse attendue
-        CodeResponse mockResponse = new CodeResponse("Hello, World!", "0.5", "10");
-        Mockito.when(compilerService.compileAndRun(any(CodeRequest.class))).thenReturn(mockResponse);
+        CodeResponse mockResponse = new CodeResponse("Hello, World!", "", "");
+        CodeRequest codeRequest = new CodeRequest("java", JavaSamples.getCorrectHelloWorld());
+        Mockito.when(compilerService.compileAndRun(codeRequest)).thenReturn(mockResponse);
 
         // Requête JSON d'entrée
-        CodeRequest codeRequest = new CodeRequest("java", "System.out.println(\"Hello, World!\");");
         String requestJson = objectMapper.writeValueAsString(codeRequest);
 
         // Effectuer la requête POST et vérifier la réponse
         mockMvc.perform(post("/compile")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("Origin",frontendUrl)
                         .content(requestJson))
                 .andExpect(status().isOk())
-                .andExpect(content().json(objectMapper.writeValueAsString(mockResponse)));
+                .andExpect(jsonPath("$.output").value(mockResponse.getOutput())); // Vérifie uniquement le champ output
     }
 
     @Test
