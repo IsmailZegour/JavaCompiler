@@ -3,6 +3,7 @@ package dev.formation.JavaCompiler.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.formation.JavaCompiler.dto.CodeRequest;
 import dev.formation.JavaCompiler.dto.CodeResponse;
+import dev.formation.JavaCompiler.samples.JavaSamples;
 import dev.formation.JavaCompiler.service.CompilerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
