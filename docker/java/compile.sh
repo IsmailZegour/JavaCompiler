@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Définir une limite de temps pour l'exécution (par exemple, 10 secondes)
-TIMEOUT=5
+TIMEOUT=7
 
 # Lire le code à partir de l'argument
 code="$1"
@@ -25,7 +25,7 @@ fi
 echo "$code" > "$className.java"
 
 # Démarrer le chronométrage
-start_time=$(date +%s%3N)
+start_time=$(date +%s%N)
 
 # Compiler le fichier Java
 timeout $TIMEOUT javac "$className.java" 2> error.log
@@ -48,12 +48,14 @@ if [ $? -ne 0 ]; then
 fi
 
 # Arrêter le chronométrage
-end_time=$(date +%s%3N) # Temps en millisecondes
-EXECUTION_TIME=$((end_time - start_time)) # Durée en millisecondes
+end_time=$(date +%s%N) # Temps en millisecondes
+execution_time_ns=$((end_time - start_time))  # Durée en nanosecondes
+execution_time_s=$(awk "BEGIN {printf \"%.3f\", $execution_time_ns / 1000000000}")  # Conversion en secondes avec 3 décimales
+
 
 # Afficher la sortie du programme suivie de l'exécution totale
 cat output.log
-echo "{ExecutionTime}: ${EXECUTION_TIME}"
+echo "{ExecutionTime}: ${execution_time_s}"
 
 # Nettoyer les fichiers temporaires
 rm -f "$className.java" "$className.class" error.log output.log

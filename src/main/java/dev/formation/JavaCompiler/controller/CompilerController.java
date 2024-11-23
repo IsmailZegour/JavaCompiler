@@ -21,7 +21,7 @@ public class CompilerController {
     @PostMapping
     public ResponseEntity<CodeResponse> compileAndRun(@RequestBody CodeRequest codeRequest) {
         try {
-            // Exécute le service et renvoie une réponse OK
+
             CodeResponse response = compilerService.compileAndRun(codeRequest);
             return ResponseEntity.ok(response);
 
