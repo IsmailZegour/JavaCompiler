@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/compile")
-@CrossOrigin(origins = "http://localhost:4200") // Autorise uniquement Angular
+@CrossOrigin(origins = "${frontend.url}") // Autorise uniquement Angular
 public class CompilerController {
 
     private final CompilerService compilerService;
@@ -36,5 +36,9 @@ public class CompilerController {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new CodeResponse(e.getMessage(),null,null));
         }
+    }
+    @GetMapping("/test")
+    public String getHelloWorld(){
+        return "Hello, World!";
     }
 }

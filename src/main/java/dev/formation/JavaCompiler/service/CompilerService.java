@@ -26,15 +26,16 @@ public class CompilerService {
         LanguageValidator validator = validatorFactory.getValidator(language);
         validator.validate(code); // Validation avant traitement
 
-        CodeResponse response = startContainer(code, validator);
+        String imageName = validator.getImageName();
+        String instrumentedCode = validator.injectMeasurements(code);
+
+        CodeResponse response = startContainer(instrumentedCode, imageName);
         System.out.println("Output: " + response.getOutput());
 
         return response;
     }
 
-    private static CodeResponse startContainer(String code, LanguageValidator validator) throws IOException, InterruptedException {
-        String imageName = validator.getImageName();
-        String instrumentedCode = validator.injectMeasurements(code);
+    private static CodeResponse startContainer(String instrumentedCode, String imageName) throws IOException, InterruptedException {
 
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "docker", "run",

@@ -34,3 +34,4 @@ fi
 
 # Nettoyer les fichiers temporaires
 rm -f "$error_file"
+
