@@ -13,29 +13,28 @@ import java.io.InputStreamReader;
 @Service
 public class CompilerService {
 
-    private final ValidatorFactory validatorFactory;
+//    private final ValidatorFactory validatorFactory;
+//
+//    public CompilerService(ValidatorFactory validatorFactory) {
+//        this.validatorFactory = validatorFactory;
+//    }
 
-    public CompilerService(ValidatorFactory validatorFactory) {
-        this.validatorFactory = validatorFactory;
-    }
+//    public CodeResponse compileAndRun(CodeRequest codeRequest) throws IOException, InterruptedException {
+//        String language = codeRequest.getLanguage();
+//        String code = codeRequest.getCode();
+//
+//        LanguageValidator validator = validatorFactory.getValidator(language);
+//        validator.validate(code); // Validation avant traitement
+//
+//        String imageName = validator.getImageName();
+//        String instrumentedCode = validator.injectMeasurements(code);
+//
+//        CodeResponse response = startContainer(instrumentedCode, imageName);
+//
+//        return response;
+//    }
 
-    public CodeResponse compileAndRun(CodeRequest codeRequest) throws IOException, InterruptedException {
-        String language = codeRequest.getLanguage();
-        String code = codeRequest.getCode();
-
-        LanguageValidator validator = validatorFactory.getValidator(language);
-        validator.validate(code); // Validation avant traitement
-
-        String imageName = validator.getImageName();
-        String instrumentedCode = validator.injectMeasurements(code);
-
-        CodeResponse response = startContainer(instrumentedCode, imageName);
-        System.out.println("Output: " + response.getOutput());
-
-        return response;
-    }
-
-    private static CodeResponse startContainer(String instrumentedCode, String imageName) throws IOException, InterruptedException {
+    public CodeResponse startContainer(String instrumentedCode, String imageName) throws IOException, InterruptedException {
 
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "docker", "run",

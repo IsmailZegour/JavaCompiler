@@ -3,6 +3,8 @@ package dev.formation.JavaCompiler.controller;
 import dev.formation.JavaCompiler.dto.CodeRequest;
 import dev.formation.JavaCompiler.dto.CodeResponse;
 import dev.formation.JavaCompiler.service.CompilerService;
+import dev.formation.JavaCompiler.validator.LanguageValidator;
+import dev.formation.JavaCompiler.validator.ValidatorFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,16 +16,27 @@ public class CompilerController {
 
     private final CompilerService compilerService;
 
-    public CompilerController(CompilerService compilerService) {
+    private final ValidatorFactory validatorFactory;
+
+    public CompilerController(CompilerService compilerService, ValidatorFactory validatorFactory) {
         this.compilerService = compilerService;
+        this.validatorFactory = validatorFactory;
     }
 
     @PostMapping
     public ResponseEntity<CodeResponse> compileAndRun(@RequestBody CodeRequest codeRequest) {
         try {
+            String language = codeRequest.getLanguage();
+            String code = codeRequest.getCode();
 
-            CodeResponse response = compilerService.compileAndRun(codeRequest);
-            return ResponseEntity.ok(response);
+            LanguageValidator validator = validatorFactory.getValidator(language);
+            validator.validate(code); // Validation avant traitement
+
+            String imageName = validator.getImageName();
+            String instrumentedCode = validator.injectMeasurements(code);
+
+
+            return ResponseEntity.ok(compilerService.startContainer(instrumentedCode, imageName));
 
         } catch (IllegalArgumentException e) {
             // Gère les erreurs de validation (mauvais code, etc.)
