@@ -1,9 +1,6 @@
 package dev.formation.JavaCompiler.service;
 
-import dev.formation.JavaCompiler.dto.CodeRequest;
 import dev.formation.JavaCompiler.dto.CodeResponse;
-import dev.formation.JavaCompiler.validator.LanguageValidator;
-import dev.formation.JavaCompiler.validator.ValidatorFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -11,28 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 @Service
-public class CompilerService {
-
-//    private final ValidatorFactory validatorFactory;
-//
-//    public CompilerService(ValidatorFactory validatorFactory) {
-//        this.validatorFactory = validatorFactory;
-//    }
-
-//    public CodeResponse compileAndRun(CodeRequest codeRequest) throws IOException, InterruptedException {
-//        String language = codeRequest.getLanguage();
-//        String code = codeRequest.getCode();
-//
-//        LanguageValidator validator = validatorFactory.getValidator(language);
-//        validator.validate(code); // Validation avant traitement
-//
-//        String imageName = validator.getImageName();
-//        String instrumentedCode = validator.injectMeasurements(code);
-//
-//        CodeResponse response = startContainer(instrumentedCode, imageName);
-//
-//        return response;
-//    }
+public class LocalCompilerService implements ICompilerService {
 
     public CodeResponse startContainer(String instrumentedCode, String imageName) throws IOException, InterruptedException {
 
