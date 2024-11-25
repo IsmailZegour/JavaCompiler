@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/compile")
+@RequestMapping
 @CrossOrigin(origins = "${frontend.url}") // Autorise uniquement Angular
 public class CompilerController {
 
@@ -23,7 +23,7 @@ public class CompilerController {
         this.validatorFactory = validatorFactory;
     }
 
-    @PostMapping
+    @PostMapping("/compile")
     public ResponseEntity<CodeResponse> compileAndRun(@RequestBody CodeRequest codeRequest) {
         try {
             String language = codeRequest.getLanguage();

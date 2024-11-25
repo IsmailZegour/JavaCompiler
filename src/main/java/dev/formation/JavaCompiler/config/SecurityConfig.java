@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Configurer CORS
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/compile/**").permitAll() // Autoriser les requêtes vers /compile/**
+                        .requestMatchers("/test/**").permitAll() // Autoriser les requêtes vers /compile/**
                         .anyRequest().authenticated() // Exiger une authentification pour les autres requêtes
                 );
 
