@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   java-backend:
-    image: java-backend # Utilise votre image existante
+    image: testing1111 # Utilise votre image existante
     container_name: java-backend-container
     build:
       context: .
@@ -13,5 +13,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock # Montre le socket Docker pour permettre les interactions Docker
 #      - shared_volume:/app/tmp
 #    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
 #      JAVA_OPTS: "-Xms512m -Xmx512m -XX:+DisableExplicitGC"
     restart: unless-stopped
