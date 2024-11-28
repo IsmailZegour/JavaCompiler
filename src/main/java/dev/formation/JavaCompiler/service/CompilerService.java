@@ -50,7 +50,7 @@ public class CompilerService {
 
             if (compileProcess.exitValue() != 0) {
                 String errors = Files.readString(errorFile);
-                throw new RuntimeException("Compilation failed:\n" + formatCompilationError(errors));
+                throw new RuntimeException("Compilation failed\n" + formatCompilationError(errors));
             }
 
 //            // Chronométrer l'exécution
@@ -66,7 +66,7 @@ public class CompilerService {
 
             if (executeProcess.exitValue() != 0) {
                 String errors = Files.readString(errorFile);
-                throw new RuntimeException("Execution failed:\n" + errors);
+                throw new RuntimeException("Execution failed\n" + errors);
             }
 
             long executionTimeNs = System.nanoTime() - startTime;
