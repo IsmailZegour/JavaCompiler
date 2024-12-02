@@ -47,7 +47,8 @@ public class JavaValidator implements LanguageValidator {
             "java\\.net\\.Socket", // Sockets
             "java\\.nio\\.channels\\.SocketChannel", // NIO Sockets
             "java\\.io\\.File", // File operations
-            "java\\.nio\\.file\\.Paths" // Path operations
+            "java\\.nio\\.file\\.Paths", // Path operations
+            "while\\s*\\(\\s*true\\s*\\)" // Infinite loop: while(true)
     };
 
 
@@ -148,7 +149,7 @@ public class JavaValidator implements LanguageValidator {
         // Vérifier les injections malveillantes
         for (String pattern : FORBIDDEN_PATTERNS) {
             if (code.matches("(?s).*" + pattern + ".*")) {
-                throw new IllegalArgumentException("Code contains forbidden pattern: " + pattern);
+                throw new IllegalArgumentException("Code contains forbidden pattern");
             }
         }
     }
